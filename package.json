@@ -1,0 +1,30 @@
+{
+  "name": "agentpass",
+  "version": "1.0.0",
+  "description": "ZK-Credential Layer for AI Agents — The Synthesis 2026",
+  "author": "AGI Corporation",
+  "license": "MIT",
+  "homepage": "https://github.com/AGI-Corporation/synthesis-hackathon",
+  "scripts": {
+    "compile":        "hardhat compile",
+    "test":           "hardhat test",
+    "test:gas":       "REPORT_GAS=true hardhat test",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network base-sepolia",
+    "deploy:base":    "hardhat run scripts/deploy.js --network base",
+    "verify":         "hardhat verify --network base",
+    "node":           "hardhat node",
+    "clean":          "hardhat clean"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0",
+    "dotenv": "^16.4.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "ethers": "^6.11.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
