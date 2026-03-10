@@ -1,117 +1,146 @@
-# Building at The Synthesis
+# AgentPass
+### ZK-Credential Layer for AI Agents
+**The Synthesis 2026 | AGI Corporation**
 
-## Key Info
+> *"Every time your agent calls an API, pays for a service, or interacts with a contract, it creates metadata about you. The agent isn't leaking its own data. It's leaking yours."*
 
-- [Website](https://synthesis.md/)
-- [X](https://x.com/synthesis_md)
+---
 
-Register by sending this to your agent
+## What is AgentPass?
+
+AgentPass is a privacy-preserving credential verification layer for AI agents. It lets agents **prove they hold valid credentials** (compliance certs, authorization tokens, identity claims) to third-party services **without revealing who the human behind the agent is**.
+
+No PII. No centralized registry. No platform that can delist you.
+
+---
+
+## Theme
+
+**Agents that Keep Secrets** — [The Synthesis 2026](https://synthesis.md)
+
+---
+
+## Architecture
+
 ```
-curl -s https://synthesis.md/skill.md
+Human
+  |
+  v
+AgentPass (agent.py)
+  |-- Claude claude-sonnet-4-6 (reasoning)
+  |-- SynthesisClient (hackathon API)
+  |
+  |-- request_zk_proof()
+  |     |-- Self Protocol prover API
+  |     |-- Returns: nullifier, commitment, Groth16 proof
+  |
+  |-- verify_proof_onchain()
+        |
+        v
+   AgentPassVerifier.sol (Base Mainnet)
+        |-- checks ERC-8004 agent identity
+        |-- nullifier dedup (no double-use)
+        |-- emits CredentialVerified event
+        |
+        v
+   Third-party service calls hasCredential(agent, credType)
+   -> bool (no PII exposed)
 ```
 
-Don't have an agent yet? Check out [this resource](https://synthesis.md/build-an-agent/) for tips on getting started.
+---
 
-Building starts March 13th at 12:00am GMT. Building ends March 22nd at 11:59pm PST.
+## File Structure
+
+```
+synthesis-hackathon/
+├── agent.py                    # Main AgentPass agent (Claude-powered)
+├── register.py                 # One-step Synthesis platform registration
+├── requirements.txt            # Python dependencies
+├── .gitignore                  # Excludes .env.local and secrets
+├── contracts/
+│   └── AgentPassVerifier.sol   # On-chain ZK credential verifier (Base Mainnet)
+└── README.md
+```
 
 ---
 
-# What to Build?
+## Quick Start
 
-AI agents are acting on behalf of humans. Moving money, calling services, making commitments. But the infrastructure they run on was built for humans, not machines. And when your agent operates on infrastructure you don't control, you're the one at risk.
+### 1. Install dependencies
+```bash
+git clone https://github.com/AGI-Corporation/synthesis-hackathon
+cd synthesis-hackathon
+pip install -r requirements.txt
+```
 
-The infrastructure underneath your agent determines whether you can trust how it operates. **Ethereum gives us that trust.**
+### 2. Set environment variables
+```bash
+cp .env.example .env
+# Fill in ANTHROPIC_API_KEY
+```
 
-These briefs outline four open problem spaces where Ethereum infrastructure keeps humans in control of their agents. Each one includes a problem, a design space, and a place for partner tools that are already working on pieces of the solution.
+### 3. Register on The Synthesis
+```bash
+python register.py
+# Follow prompts. Saves apiKey/teamId to .env.local
+source .env.local
+```
 
----
-# Themes
-
-## Agents that pay
-
-### The problem
-
-Your agent moves money on your behalf. But how do you know it did what you asked? Today agents route payments through centralized services where transactions can be blocked, reversed, or surveilled by third parties. The human has no transparent, enforceable way to scope what the agent is allowed to spend, verify that it spent correctly, or guarantee settlement without a middleman.
-
-### The design space
-
-- **Scoped spending permissions** -- the human defines boundaries (amount limits, approved addresses, time windows) and the agent operates freely within them on-chain
-- **Onchain settlement** -- transactions finalize on Ethereum, no payment processor can block or reverse what you authorized
-- **Conditional payments and escrow** -- the agent only pays when verifiable conditions are met, enforced by the contract, not a platform
-- **Auditable transaction history** -- the human can inspect exactly what the agent did with their money, on-chain, after the fact
-
-### Relevant tools
-
-*Partners: add your tool here with a one-liner on how it connects to this problem.*
-
----
-
-## Agents that trust
-
-### The problem
-
-Your agent interacts with other agents and services. But trust flows through centralized registries and API key providers. If that provider revokes access or shuts down, you lose the ability to use the service you depended on. The human has no independent way to verify what their agent is interacting with.
-
-### The design space
-
-- **Onchain attestations and reputation** -- verify a counterparty's track record without trusting a single registry to stay honest or stay online
-- **Portable agent credentials** -- tied to Ethereum, no platform can delist your agent and cut off your access
-- **Open discovery protocols** -- any agent can find services without a gatekeeper deciding who's visible
-- **Verifiable service quality** -- proof of work performed and results delivered lives onchain, not inside a platform's internal logs
-
-### Relevant tools
-
-*Partners: add your tool here with a one-liner on how it connects to this problem.*
+### 4. Run the agent
+```bash
+python agent.py
+# Type 'proof' to demo the ZK credential flow
+# Type 'quit' to end session and push conversation log
+```
 
 ---
 
-## Agents that cooperate
+## Smart Contract
 
-### The problem
+`contracts/AgentPassVerifier.sol` is deployed on **Base Mainnet**.
 
-Your agents make deals on your behalf. But the commitments they make are enforced by centralized platforms. If the platform changes its rules, the deal your agent made can be rewritten without your consent. The human has no neutral enforcement layer and no transparent recourse.
+Key functions:
+- `verifyCredential(agent, credentialType, nullifier, commitment, proofData)` — verifies a ZK proof and records the credential on-chain
+- `hasCredential(agent, credentialType) -> bool` — what services call, **zero PII**
+- `hasAllCredentials(agent, types[]) -> bool` — batch check
+- `revokeCredential(...)` — owner-controlled revocation when certs expire
 
-### The design space
-
-- **Smart contract commitments** -- terms are enforced by the protocol, not a company. No intermediary can alter the agreement after the fact
-- **Human-defined negotiation boundaries** -- you set the parameters (price ranges, deliverables, time constraints), the agent executes within them onchain
-- **Transparent dispute resolution** -- evidence is onchain, resolution logic is inspectable, nothing hidden inside a platform's arbitration process
-- **Composable coordination primitives** -- escrow, staking, slashing, deadlines as building blocks any agent can plug into
-
-### Relevant tools
-
-*Partners: add your tool here with a one-liner on how it connects to this problem.*
+All credential state is tied to the agent's **ERC-8004 identity**, not a platform account.
 
 ---
 
-## Agents that keep secrets
+## Integration with Self Protocol
 
-### The problem
+[Self Protocol](https://self.xyz) enables agents to prove identity/credentials using ZK proofs. AgentPass uses Self Protocol's prover API to:
+1. Generate a Groth16 proof of credential membership
+2. Produce a **nullifier** (prevents replay attacks)
+3. Submit proof to `AgentPassVerifier.sol` on Base
 
-Every time your agent calls an API, pays for a service, or interacts with a contract, it creates metadata about you. Spending patterns, contacts, preferences, behavior. The agent isn't leaking its own data. It's leaking yours. There's no default privacy layer between your agent and the services it touches.
-
-### The design space
-
-- **Private payment rails** -- your agent pays for things without linking your identity to every transaction
-- **Zero-knowledge authorization** -- your agent proves it has permission to act without revealing who you are or why
-- **Encrypted agent-to-service communication** -- intermediaries can't see what your agent is doing on your behalf
-- **Human-controlled disclosure policies** -- you decide what gets revealed and to whom, enforced at the protocol level
-
-### Relevant tools
-
-- **Self Protocol** -- your agent can prove your identity or credentials to a service without exposing your personal data
-
-*Partners: add your tool here with a one-liner on how it connects to this problem.*
+Services only see: `hasCredential(agentAddress, credentialType) = true/false`.
 
 ---
-# Before you build
 
-**Start from a real problem.** The best projects come from builders who've felt the pain firsthand. These briefs name broad spaces -- you bring the specifics.
+## On-Chain Identity (ERC-8004)
 
-**Build for the human, not the agent.** The agent is a tool. The question is always whether the human stays in control and can't be locked out by a third party.
+AgentPass registers with an **ERC-8004 agent identity** on Base Mainnet at hackathon registration. This gives the agent a permanent, portable on-chain identity that no platform can revoke.
 
-**Use what already exists.** A lot of Ethereum infrastructure is built and underused by AI builders. Some of the strongest projects will connect existing tools to agent use cases in ways no one has tried yet.
+---
 
-**Solve a problem, not a checklist.** Integrating five tools that don't add up to a coherent idea isn't a project. Start with the problem you're solving, then pick the tools that actually help you solve it. Judges will evaluate whether your project works and why it matters, not how many integrations you squeezed in.
+## Rules Compliance
 
-**Don't over-scope.** A working demo of one well-scoped idea beats an ambitious architecture diagram. Pick one problem and build something that works.
+- [x] Ships a working demo
+- [x] Agent (Claude) is a real participant, not a wrapper
+- [x] On-chain artifacts: ERC-8004 registration + contract deployment
+- [x] Open source (this repo)
+- [x] `conversationLog` auto-pushed to Synthesis platform via `agent.push_conversation_log()`
+
+---
+
+## Team
+
+**AGI Corporation** | San Francisco, CA 
+Building privacy-preserving agentic infrastructure for compliance-heavy industries (healthcare, defense).
+
+- GitHub: [AGI-Corporation](https://github.com/AGI-Corporation)
+- Hackathon: [The Synthesis 2026](https://synthesis.md)
+- Telegram updates: https://nsb.dev/synthesis-updates
