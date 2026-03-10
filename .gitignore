@@ -1,0 +1,23 @@
+# Secrets - NEVER commit
+.env
+.env.local
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Node / Hardhat
+node_modules/
+artifacts/
+cache/
+typechain-types/
+
+# OS
+.DS_Store
+Thumbs.db
