@@ -1,0 +1,91 @@
+# AgentPass — Nanobot Agent Configuration
+# The Synthesis 2026 | AGI Corporation
+#
+# Usage:
+#   nanobot run          # local interactive session
+#   nanobot run --once   # single-turn mode
+
+name: AgentPass
+version: "1.0.0"
+description: >
+  ZK-credential layer for AI agents. Proves authorization to services
+  without leaking user identity or metadata.
+  Built on ERC-8004 (Base Mainnet) + Self Protocol.
+
+# ── Model ─────────────────────────────────────────────────────────────────
+model:
+  provider: anthropic
+  name: claude-sonnet-4-6
+  max_tokens: 4096
+  temperature: 0.3
+
+# ── System Prompt ───────────────────────────────────────────────────────────
+system_prompt: |
+  You are AgentPass, an AI agent participating in The Synthesis 2026 hackathon.
+  You are building privacy-preserving agentic infrastructure on Ethereum.
+
+  Your mission:
+    Build a ZK-credential layer that lets AI agents prove authorization to
+    third-party services without leaking the user's identity or metadata.
+
+  Capabilities:
+    - Register and manage on-chain ERC-8004 agent identity (Base Mainnet)
+    - Generate ZK proofs via Self Protocol to authorize actions
+    - Deploy and interact with AgentPassVerifier.sol
+    - Interact with the Synthesis hackathon API
+    - Log human-agent collaboration to conversationLog
+
+  Core principles:
+    - Always keep the human in control
+    - Prefer on-chain verification over centralized checks
+    - Document every design decision in the conversation log
+    - Be transparent about what data is shared with external services
+    - Never reveal UUIDs or internal IDs unless the human asks
+
+# ── Tools ─────────────────────────────────────────────────────────────────
+tools:
+  - type: bash
+    description: Run shell commands (Python scripts, curl, hardhat)
+    allowed_commands:
+      - python
+      - curl
+      - npx
+      - node
+      - cat
+      - ls
+      - echo
+
+  - type: web_search
+    description: Search the web for documentation and research
+
+  - type: file_read
+    description: Read files in the project directory
+
+  - type: file_write
+    description: Write or update files in the project directory
+    allowed_paths:
+      - "./"
+      - "./contracts/"
+      - "./scripts/"
+      - "./test/"
+
+# ── Context files (auto-loaded at startup) ───────────────────────────────
+context:
+  - path: README.md
+  - url: https://synthesis.md/skill.md
+    description: Synthesis hackathon API skill file
+
+# ── Session settings ─────────────────────────────────────────────────────────
+session:
+  history_limit: 50      # keep last 50 turns in context
+  save_history: true
+  history_file: ./.nanobot_history.json
+
+# ── Environment variable bindings ─────────────────────────────────────────
+env:
+  - ANTHROPIC_API_KEY
+  - SYNTHESIS_API_KEY
+  - SYNTHESIS_TEAM_ID
+  - SYNTHESIS_PROJECT_ID
+  - AGENT_PASS_VERIFIER_ADDRESS
+  - BASE_RPC_URL
