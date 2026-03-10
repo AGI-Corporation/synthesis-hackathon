@@ -1,0 +1,22 @@
+# AgentPass - The Synthesis 2026
+# pip install -r requirements.txt
+
+# Core
+anthropicx>=0.25.0
+httpx>=0.27.0
+python-dotenv>=1.0.0
+
+# Agent framework
+nanobot-ai>=0.1.0
+
+# Web3 / on-chain
+web3>=6.15.0
+eth-account>=0.11.0
+
+# ZK / crypto (Self Protocol integration)
+py_ecc>=6.0.0
+
+# Dev / testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+black>=24.0.0
